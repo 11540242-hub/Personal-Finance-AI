@@ -22,6 +22,8 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
+          # 如果 package-lock.json 在根目錄，這行可以確保快取機制運作
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm install
