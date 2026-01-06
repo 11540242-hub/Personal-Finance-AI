@@ -6,14 +6,15 @@ let firebaseApp: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
 
-// 在 Vite 中，process.env 會被 define 替換為字串值
+// Firebase Config 處理
 const firebaseConfigRaw = (process.env.FIREBASE_CONFIG as string) || '{}';
 
 const getValidConfig = () => {
   if (!firebaseConfigRaw || firebaseConfigRaw === '{}') return null;
   try {
     const config = JSON.parse(firebaseConfigRaw);
-    if (config.apiKey && config.projectId) return config;
+    // 基本檢查，確保必要欄位存在
+    if (config.apiKey && config.authDomain && config.projectId) return config;
     return null;
   } catch {
     return null;
@@ -32,7 +33,7 @@ if (config) {
     auth = getAuth(firebaseApp);
     db = getFirestore(firebaseApp);
   } catch (error) {
-    console.warn("Firebase 初始化失敗，將進入展示模式：", error);
+    console.warn("Firebase 初始化失敗，系統將維持展示模式：", error);
   }
 }
 
