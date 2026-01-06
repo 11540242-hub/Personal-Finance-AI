@@ -6,10 +6,10 @@ export const getFinancialAdvice = async (
   transactions: Transaction[],
   categories: Category[]
 ): Promise<string> => {
-  const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : '';
+  const apiKey = (process.env.API_KEY as string) || '';
   
   if (!apiKey) {
-    return "尚未設定 API 金鑰（API_KEY 未找到）。系統目前處於展示模式，無法存取 AI 功能。";
+    return "尚未設定 API 金鑰。系統目前處於展示模式，無法使用 AI 分析功能。請在 GitHub Secrets 中設定 API_KEY。";
   }
 
   try {
@@ -27,13 +27,17 @@ export const getFinancialAdvice = async (
     }, {});
 
     const prompt = `
-      作為一位資深理財顧問，請分析以下財務狀況並給予 3 點具體建議。
-      目前總資產: ${totalBalance} 元
-      本期總收入: ${income} 元
-      本期總支出: ${expense} 元
-      支出分類統計: ${JSON.stringify(categorySummary)}
+      作為一位專業的個人理財顧問，請分析以下財務數據並給予 3 點具體且可執行的建議：
       
-      請以繁體中文回答，口吻專業且親切。
+      【資產概況】
+      - 總資產: ${totalBalance.toLocaleString()} 元
+      - 本期總收入: ${income.toLocaleString()} 元
+      - 本期總支出: ${expense.toLocaleString()} 元
+      
+      【支出分類統計】
+      ${JSON.stringify(categorySummary, null, 2)}
+      
+      請以繁體中文回答，口吻專業、富有洞察力且友善。請針對收支平衡與支出佔比進行重點評論。
     `;
 
     const response = await ai.models.generateContent({
@@ -41,9 +45,9 @@ export const getFinancialAdvice = async (
       contents: prompt,
     });
 
-    return response.text || "AI 暫時無法產生回應。";
+    return response.text || "AI 暫時無法產生回應，請稍後再試。";
   } catch (error) {
     console.error("Gemini AI error:", error);
-    return "呼叫 AI 時發生錯誤，請確認 API Key 是否有效。";
+    return "呼叫 AI 時發生錯誤。請確認您的 API Key 是否正確設定且具備 gemini-3-pro-preview 的存取權限。";
   }
 };

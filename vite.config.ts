@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   base: './',
   define: {
-    // 確保這些變數在編譯時被正確替換
+    // 注入環境變數，若不存在則為空字串或空物件 JSON
     'process.env.API_KEY': JSON.stringify(process.env.API_KEY || ''),
     'process.env.FIREBASE_CONFIG': JSON.stringify(process.env.FIREBASE_CONFIG || '{}')
   },

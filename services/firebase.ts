@@ -6,8 +6,8 @@ let firebaseApp: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
 
-// 安全獲取環境變數
-const firebaseConfigRaw = typeof process !== 'undefined' ? process.env.FIREBASE_CONFIG : null;
+// 在 Vite 中，process.env 會被 define 替換為字串值
+const firebaseConfigRaw = (process.env.FIREBASE_CONFIG as string) || '{}';
 
 const getValidConfig = () => {
   if (!firebaseConfigRaw || firebaseConfigRaw === '{}') return null;
@@ -26,13 +26,11 @@ if (config) {
   try {
     if (!getApps().length) {
       firebaseApp = initializeApp(config);
-      auth = getAuth(firebaseApp);
-      db = getFirestore(firebaseApp);
     } else {
       firebaseApp = getApps()[0];
-      auth = getAuth(firebaseApp);
-      db = getFirestore(firebaseApp);
     }
+    auth = getAuth(firebaseApp);
+    db = getFirestore(firebaseApp);
   } catch (error) {
     console.warn("Firebase 初始化失敗，將進入展示模式：", error);
   }

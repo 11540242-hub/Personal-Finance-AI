@@ -14,12 +14,14 @@ import {
   onSnapshot, 
   addDoc, 
   deleteDoc, 
-  doc 
+  doc,
+  query,
+  orderBy
 } from 'firebase/firestore';
 import { AppState, UserProfile, BankAccount, Transaction, Category } from './types';
 import { DEFAULT_CATEGORIES, MOCK_ACCOUNTS, MOCK_TRANSACTIONS } from './mockData';
 
-const STORAGE_KEY = 'finance_manager_data';
+const STORAGE_KEY = 'finance_manager_data_v2';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -33,7 +35,7 @@ const App: React.FC = () => {
     categories: DEFAULT_CATEGORIES
   });
 
-  // Auth Observer
+  // Firebase Auth 監聽
   useEffect(() => {
     if (isFirebaseEnabled() && auth) {
       const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -46,6 +48,7 @@ const App: React.FC = () => {
           setIsDemo(false);
         } else {
           setUser(null);
+          // 若無使用者且 Firebase 已啟用，則預設進入 Demo
           setIsDemo(true);
         }
         setLoading(false);
@@ -56,12 +59,16 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Data Sync Logic
+  // 資料同步邏輯
   useEffect(() => {
     if (isDemo) {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        setState(JSON.parse(saved));
+        try {
+          setState(JSON.parse(saved));
+        } catch {
+          setState({ accounts: MOCK_ACCOUNTS, transactions: MOCK_TRANSACTIONS, categories: DEFAULT_CATEGORIES });
+        }
       } else {
         setState({
           accounts: MOCK_ACCOUNTS,
@@ -71,7 +78,7 @@ const App: React.FC = () => {
       }
     } else if (user && db) {
       const accRef = collection(db, `users/${user.uid}/accounts`);
-      const transRef = collection(db, `users/${user.uid}/transactions`);
+      const transRef = query(collection(db, `users/${user.uid}/transactions`), orderBy('date', 'desc'));
       const catRef = collection(db, `users/${user.uid}/categories`);
 
       const unsubAcc = onSnapshot(accRef, (snapshot) => {
@@ -97,13 +104,13 @@ const App: React.FC = () => {
     }
   }, [isDemo, user]);
 
+  // 本地快存 (Demo 模式)
   useEffect(() => {
     if (isDemo) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
   }, [state, isDemo]);
 
-  // Handlers
   const handleAddAccount = async (acc: Omit<BankAccount, 'id'>) => {
     if (isDemo) {
       const newAcc = { ...acc, id: Math.random().toString(36).substr(2, 9) };
@@ -145,9 +152,15 @@ const App: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-50 text-indigo-600 font-bold">載入中...</div>;
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
+        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-indigo-600 font-bold">系統載入中...</p>
+      </div>
+    );
   }
 
+  // 若未登入且未開啟展示模式，導向認證頁
   if (!user && !isDemo) {
     return <AuthPage onDemoMode={() => setIsDemo(true)} />;
   }
@@ -157,7 +170,14 @@ const App: React.FC = () => {
       currentView={view} 
       setView={setView} 
       isDemo={isDemo} 
-      onSwitchMode={() => setIsDemo(!isDemo)}
+      onSwitchMode={() => {
+        if (isDemo && !user) {
+          // 如果是 Demo 想切正式但沒登入，去登入頁
+          setIsDemo(false);
+        } else {
+          setIsDemo(!isDemo);
+        }
+      }}
       user={user}
       onLogout={handleLogout}
     >
