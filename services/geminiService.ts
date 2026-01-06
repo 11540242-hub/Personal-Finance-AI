@@ -1,3 +1,5 @@
+
+// @ts-ignore
 import { GoogleGenAI } from "@google/genai";
 import { BankAccount, Transaction, Category } from "../types";
 
@@ -13,7 +15,7 @@ export const getFinancialAdvice = async (
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({ apiKey: apiKey });
     
     const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
     const income = transactions.filter(t => t.type === 'INCOME').reduce((sum, t) => sum + t.amount, 0);
