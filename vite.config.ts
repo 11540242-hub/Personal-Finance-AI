@@ -3,9 +3,9 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  base: './', // 確保相容 GitHub Pages 子路徑
+  base: './',
   define: {
-    // 注入環境變數，並確保在未設定時提供預設值以避免崩潰
+    // 確保這些變數在編譯時被正確替換
     'process.env.API_KEY': JSON.stringify(process.env.API_KEY || ''),
     'process.env.FIREBASE_CONFIG': JSON.stringify(process.env.FIREBASE_CONFIG || '{}')
   },

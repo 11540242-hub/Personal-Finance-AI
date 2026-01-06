@@ -1,4 +1,3 @@
-
 import { GoogleGenAI } from "@google/genai";
 import { BankAccount, Transaction, Category } from "../types";
 
@@ -7,20 +6,20 @@ export const getFinancialAdvice = async (
   transactions: Transaction[],
   categories: Category[]
 ): Promise<string> => {
-  const apiKey = process.env.API_KEY;
+  const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : '';
+  
   if (!apiKey) {
-    return "尚未設定 API 金鑰，無法提供 AI 建議。";
+    return "尚未設定 API 金鑰（API_KEY 未找到）。系統目前處於展示模式，無法存取 AI 功能。";
   }
 
   try {
     const ai = new GoogleGenAI({ apiKey });
     
-    // Prepare data summary for AI
     const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
     const income = transactions.filter(t => t.type === 'INCOME').reduce((sum, t) => sum + t.amount, 0);
     const expense = transactions.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + t.amount, 0);
     
-    const categorySummary = transactions.reduce((acc: any, t) => {
+    const categorySummary = transactions.reduce((acc: Record<string, number>, t) => {
       const cat = categories.find(c => c.id === t.categoryId);
       const name = cat ? cat.name : '未分類';
       acc[name] = (acc[name] || 0) + t.amount;
@@ -45,6 +44,6 @@ export const getFinancialAdvice = async (
     return response.text || "AI 暫時無法產生回應。";
   } catch (error) {
     console.error("Gemini AI error:", error);
-    return "呼叫 AI 時發生錯誤，請稍後再試。";
+    return "呼叫 AI 時發生錯誤，請確認 API Key 是否有效。";
   }
 };
