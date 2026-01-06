@@ -1,5 +1,4 @@
 
-// @ts-ignore
 import { GoogleGenAI } from "@google/genai";
 import { BankAccount, Transaction, Category } from "../types";
 
